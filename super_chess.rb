@@ -39,6 +39,13 @@ class Chesspiece
 end
 
 class Pawn < Chesspiece
+  def initialize(color, x, y)
+    super(color)
+    super(x_pos)
+    super(y_pos)
+    super(active)
+	super(move_num)
+  end
   
   def get_moves(color, x, y)
     #Movement options specific to the pawn piece
@@ -82,6 +89,7 @@ class Court < Chesspiece
     super(x_pos)
     super(y_pos)
     super(active)
+	super(move_num)
     @type = type
   end
   
@@ -90,32 +98,69 @@ class Court < Chesspiece
     case @type
       when rook
         i = y - 8
-        for i <= (y + 8)
+        while i <= y + 8 do
           @possMoves << [i, x]
+		  i += 1
         end
         i = x - 8
-        for i <= (x + 8)
+        while i <= x + 8 do
           @possMoves << [y, i]
+		  i += 1
         end
-        return @validMoves	   
+		@possMoves.each do |move|
+		  if move_on_board(move[1], move[0])
+		    @validMoves << move
+		end
+        return @validMoves
+		end
       when knight
         @possMoves = [[x+2, y+1], [x+1, y+2], [x+2, y-1], [x+1, y-2],
         			   [x-2, y-1], [x-1, y-2], [x-2, y+1], [x-1, y+2]]
+		@possMoves.each do |move|
+		  if move_on_board(move[1], move[0])
+		    @validMoves << move
+		end
         return @validMoves
+		end
       when bishop  #TODO
         @possMoves = [[x+8, y+8], [x-8, y-8], 
         			   [x+8, y-8], [x-8, y+8]]
+		@possMoves.each do |move|
+		  if move_on_board(move[1], move[0])
+		    @validMoves << move
+		end
         return @validMoves
+		end
       when queen  #TODO
-        @possMoves = [[
+        i = y - 8
+        while i <= y + 8 do
+          @possMoves << [i, x]
+		  i += 1
+        end
+        i = x - 8
+        while i <= x + 8 do
+          @possMoves << [y, i]
+		  i += 1
+        end
+		@possMoves.each do |move|
+		  if move_on_board(move[1], move[0])
+		    @validMoves << move
+		end
         return @validMoves
+		end
       when king
         @possMoves = [[x-1, y+1], [x, y+1], [x+1, y+1], 
         			   [x-1, y], [x+1, y], 
         			   [x-1, y-1], [x, y-1], [x+1, y-1]]
-        return @validMoves
+        @possMoves.each do |move|
+		  if move_on_board(move[1], move[0])
+		    @validMoves << move
+		end
+		return @validMoves
+		end
       else
         puts "Error: could not identify chesspiece type."
+	  end
     end
     
 end
@@ -123,7 +168,39 @@ end
 class Chessboard
 
   def initialize()
-    #TODO create piece instances for board
+	i = 0
+	while i <= 7 do
+	  #TODO doesn't work yet
+	  command = "wp#{i + 1} = Pawn.new('white', #{i}, 6)"
+	  eval(command)
+	  i += 1
+	end
+	i = 0
+	while i <= 7 do
+	  #TODO doesn't work yet
+	  command = "wp#{i + 1} = Pawn.new('white', #{i}, 6)"
+	  eval(command)
+	  i += 1
+	end
+	
+	br1 = Court.new("black", 0, 0, "rook")
+	bn1 = Court.new("black", 1, 0, "knight")
+	bb1 = Court.new("black", 2, 0, "bishop")
+	bq1 = Court.new("black", 3, 0, "queen")
+	bk1 = Court.new("black", 4, 0, "king")
+	bb2 = Court.new("black", 5, 0, "bishop")
+	bn2 = Court.new("black", 6, 0, "knight")
+	br2 = Court.new("black", 7, 0, "rook")
+	
+	wr1 = Court.new("white", 0, 7, "rook")
+	wn1 = Court.new("white", 1, 7, "knight")
+	wb1 = Court.new("white", 2, 7, "bishop")
+	wq1 = Court.new("white", 3, 7, "queen")
+	wk1 = Court.new("white", 4, 7, "king")
+	wb2 = Court.new("white", 5, 7, "bishop")
+	wn2 = Court.new("white", 6, 7, "kinght")
+	wr2 = Court.new("white", 7, 7, "rook")
+	
     
     @board = [[br1, bn1, bb1, bq1, bk1, bb2, bn2, br2],
     		 [bp1, bp2, bp3, bp4, bp5, bp6, bp7, bp8], 
@@ -135,11 +212,21 @@ class Chessboard
     		 [wr1, wn1, wb1, wq1, wk1, wb2, wn2, wr2]]
   end
   
+  def menu()
+    puts "Let's play Chess!"
+	puts "1 - Single player against computer"
+	puts "2 - Two player"
+	selection = gets.chomp
+	return selection
+  end
+  
   def move_on_board(x, y)
     #Returns true if x and y index are within the board, false otherwise
     if (x >= 0) && (x <= 7)
       if (y >= 0) && (y <= 7)
         return True
+	  end
+	end
     return False
   end
   
@@ -198,35 +285,45 @@ class Chessboard
   
 end
 
-board = new Chessboard()
+chessboard = Chessboard.new()
 
 quit = "N"
 gameover = "N"
-while (quit != "Y" && quit != "y") && gameover != "Y"
+while quit != "Y" || quit != "y" || gameover != True do
   
-  board.draw_board()
+  chessboard.draw_board()
   
   movement = False
-  while movement == False
+  while movement == False do
     color = "white"
-    puts "White's move. Select your piece by it's name on the board: "
+    puts "White's move. Select your piece by it's name on the board, for example 'wq1' for white's queen: "
 	#TODO need to verify user input is a piece prior to moving on
     piece = gets.chomp
-    if (eval piece + '.get_color') != color
+    if (eval(piece + '.get_color')) != color
       puts "That piece does not belong to you."
       continue
     end
     
-    puts "Select the position you would like to move to using the indexes on the board."
-    puts "X-axis: "
-    x = gets.chomp
-    puts "Y-axis: "
-    y = gets.chomp
-  
+    puts "M - Select the position you would like to move to using the indexes on the board. "
+	puts "S - Show available moves for the piece selected. "
+	puts "C - Select a different piece to move. "
+	selection = gets.chomp
+	if selection == "S" || selection == "s"
+	  show_moves()
+	  continue
+	elsif selection == "C" || selection == "c"
+	  continue
+	else
+      puts "X-axis: "
+      x = gets.chomp
+      puts "Y-axis: "
+      y = gets.chomp
+    end
     #TODO finish rest of verifying move
 	
 	#TODO establish movement
-	
+	movement = True
+  end
 	#TODO repeat ^^^ for black
-  
+  gameover = True
 end
